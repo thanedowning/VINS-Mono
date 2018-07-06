@@ -29,6 +29,7 @@ public:
   void setVoxelSize(std_msgs::Float32 voxel_size_in);
   std_msgs::Float32 const getVoxelSize();
   void addPoints(const sensor_msgs::PointCloudConstPtr &points_msg);
+  void addAPoint(const geometry_msgs::Point32 &a_point);
   sensor_msgs::PointCloudConstPtr getPointCloud(const std_msgs::Header &header);
 
 private:

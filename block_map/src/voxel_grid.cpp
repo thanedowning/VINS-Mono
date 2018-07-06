@@ -63,6 +63,7 @@ void VoxelGrid::initVoxelGrid(){
     }
     voxel_grid.insert({i,inner_y});
   }
+  return;
 }
 
 void VoxelGrid::setCenterPoint(geometry_msgs::Point32 center_in) {
@@ -120,6 +121,19 @@ void VoxelGrid::addPoints(const std::vector<geometry_msgs::Point32> &points_vec)
       voxel_grid[x_coord][y_coord][z_coord] += 0.05   // This just implements a linear probability growth;
                                                       // replace with a more sophisticated function in the future.
     }
+  }
+  cloud_needs_update = true;
+  return;
+}
+
+void VoxelGrid::addAPoint(const geometry_msgs::Point32 &a_point) {
+  int x_coord = int((a_point.x-center_point.x)/voxel_size) + (num_voxel_x/2); // These lines may introduce some weird
+  int y_coord = int((a_point.y-center_point.y)/voxel_size) + (num_voxel_y/2); // integer math inconsistencies if
+  int z_coord = int((a_point.z-center_point.z)/voxel_size) + (num_voxel_z/2); // num_voxel _x, _y, or _z are odd.
+  if (voxel_grid[x_coord][y_coord][z_coord] < 1.0) {
+    voxel_grid[x_coord][y_coord][z_coord] += 0.05   // This just implements a linear probability growth; replace with a
+                                                    // more sophisticated function in the future.  1.0 modulo this constant
+                                                    // must equal 0 for the probability stuff to work properly.
   }
   cloud_needs_update = true;
   return;

@@ -30,7 +30,7 @@ void point_cloud_callback(const sensor_msgs::PointCloudConstPtr &points_msg) {
 
 void refresh_loop() {
   while(true) {
-
+    
     std::chrono::milliseconds sleep_length(500);
     std::this_thread::sleep_for(sleep_length);
   }
