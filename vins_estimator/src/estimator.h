@@ -102,6 +102,7 @@ class Estimator
 
     vector<Vector3d> point_cloud;
     vector<Vector3d> margin_cloud;
+    vector<Vector3d> voxel_map_out;
     vector<Vector3d> key_poses;
     double initial_timestamp;
 

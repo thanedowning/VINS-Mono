@@ -4,7 +4,7 @@ using namespace ros;
 using namespace Eigen;
 ros::Publisher pub_odometry, pub_latest_odometry;
 ros::Publisher pub_path, pub_relo_path;
-ros::Publisher pub_point_cloud, pub_margin_cloud;
+ros::Publisher pub_point_cloud, pub_margin_cloud, pub_voxel_map;
 ros::Publisher pub_key_poses;
 ros::Publisher pub_relo_relative_pose;
 ros::Publisher pub_camera_pose;
@@ -28,6 +28,7 @@ void registerPub(ros::NodeHandle &n)
     pub_odometry = n.advertise<nav_msgs::Odometry>("odometry", 1000);
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("point_cloud", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("history_cloud", 1000);
+    pub_voxel_map = n.advertise<sensor_msgs::PointCloud>("voxel_map", 1000);
     pub_key_poses = n.advertise<visualization_msgs::Marker>("key_poses", 1000);
     pub_camera_pose = n.advertise<nav_msgs::Odometry>("camera_pose", 1000);
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
@@ -243,7 +244,6 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
     point_cloud.header = header;
     loop_point_cloud.header = header;
 
-
     for (auto &it_per_id : estimator.f_manager.feature)
     {
         int used_num;
@@ -261,16 +261,36 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         p.y = w_pts_i(1);
         p.z = w_pts_i(2);
         point_cloud.points.push_back(p);
+
+        /*
+        float voxel_size = 0.2;
+        geometry_msgs::Point32 blocks;
+        blocks.x = voxel_size*(round((p.x + float(pose_marker.x))/voxel_size));
+        blocks.y = voxel_size*(round((p.y + float(pose_marker.y))/voxel_size));
+        blocks.z = voxel_size*(round((p.z + float(pose_marker.z))/voxel_size));
+
+        bool repeat = false;
+        for (unsigned int i = 0; i < voxel_map.points.size(); i++) {
+        //for (auto &it_over_voxels : voxel_map.points) {
+            if (voxel_map.points[i].x == blocks.x && voxel_map.points[i].y == blocks.y && voxel_map.points[i].z == blocks.z) {
+                repeat = true;
+                continue;
+            }
+        }
+
+        if (!repeat) {
+            voxel_map.points.push_back(blocks);
+        }
+        */
     }
     pub_point_cloud.publish(point_cloud);
-
 
     // pub margined potin
     sensor_msgs::PointCloud margin_cloud;
     margin_cloud.header = header;
 
     for (auto &it_per_id : estimator.f_manager.feature)
-    { 
+    {
         int used_num;
         used_num = it_per_id.feature_per_frame.size();
         if (!(used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
@@ -278,7 +298,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         //if (it_per_id->start_frame > WINDOW_SIZE * 3.0 / 4.0 || it_per_id->solve_flag != 1)
         //        continue;
 
-        if (it_per_id.start_frame == 0 && it_per_id.feature_per_frame.size() <= 2 
+        if (it_per_id.start_frame == 0 && it_per_id.feature_per_frame.size() <= 2
             && it_per_id.solve_flag == 1 )
         {
             int imu_i = it_per_id.start_frame;
@@ -293,8 +313,74 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         }
     }
     pub_margin_cloud.publish(margin_cloud);
-}
 
+    /*
+    // Voxel Map implementation
+    geometry_msgs::Point pose_marker;
+    Vector3d correct_pose;
+    correct_pose = estimator.key_poses[0];
+    pose_marker.x = correct_pose.x();
+    pose_marker.y = correct_pose.y();
+    pose_marker.z = correct_pose.z();
+
+    sensor_msgs::PointCloud voxel_map_out;
+    voxel_map_out.header = header;
+    voxel_map_out.header.frame_id = "world";
+
+    //static std::map<int,std::map<int,std::map<int,int>>> voxel_map;
+    //std::map<int,std::map<int,int>> inner_y;
+    //std::map<int,int> inner_z;
+    //inner_z.insert({1, 10});
+    //inner_y.insert({1, inner_z});
+    //voxel_map.insert({1, inner_y});
+
+    float x_coord, y_coord, z_coord;
+    float voxel_size = 0.2;
+    int x_min = int(-20/voxel_size);
+    int y_min = int(-20/voxel_size);
+    int z_min = int(-10/voxel_size);
+    int x_max = int(20/voxel_size);
+    int y_max = int(20/voxel_size);
+    int z_max = int(10/voxel_size);
+
+    initVoxelMap(x_min, x_max, y_min, y_max, z_min, z_max);
+
+    for (auto &it_over_cloud : point_cloud.points) {
+        x_coord = (it_over_cloud.x + pose_marker.x)/voxel_size;
+        y_coord = (it_over_cloud.y + pose_marker.y)/voxel_size;
+        z_coord = (it_over_cloud.z + pose_marker.z)/voxel_size;
+        //int temp = 0;
+        //temp = voxel_map[int(x_coord)][int(y_coord)][int(z_coord)];
+        //voxel_map[int(x_coord)][int(y_coord)][int(z_coord)] = 1;
+        //voxel_map[1][1][1] = 1;
+        //inner_z.insert(std::make_pair(int(z_coord),1));
+        //inner_y.insert(std::make_pair(int(y_coord),inner_z));
+        //voxel_map.insert(std::make_pair(int(x_coord),inner_y));
+        //ROS_DEBUG("x_coord: %i\r\n", int(x_coord));
+        //ROS_DEBUG("y_coord: %i\r\n", int(y_coord));
+        //ROS_DEBUG("z_coord: %i\r\n", int(z_coord));
+        //int test = int(x_coord);
+        //inner_z.insert({(int)z_coord, 10});
+        //inner_y.insert({1, inner_z});
+        //voxel_map.insert({1, inner_y});
+        //voxel_map[int(x_coord)][int(y_coord)][int(z_coord)] = true;
+    }
+
+    geometry_msgs::Point32 blocks;
+
+    for (auto &it_map_x_pair : voxel_map) {
+      blocks.x = voxel_size*it_map_x_pair.first;
+      for (auto &it_map_y_pair : it_map_x_pair.second) {
+        blocks.y = voxel_size*it_map_y_pair.first;
+        for (auto &it_map_z_pair : it_map_y_pair.second) {
+          blocks.z = voxel_size*it_map_z_pair.first;
+          voxel_map_out.points.push_back(blocks);
+        }
+      }
+    }
+    pub_voxel_map.publish(voxel_map_out);
+    */
+}
 
 void pubTF(const Estimator &estimator, const std_msgs::Header &header)
 {
@@ -419,4 +505,18 @@ void pubRelocalization(const Estimator &estimator)
     odometry.twist.twist.linear.y = estimator.relo_frame_index;
 
     pub_relo_relative_pose.publish(odometry);
+}
+
+void initVoxelMap(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) {
+  std::map<int,std::map<int,bool>> inner_y;
+  std::map<int,bool> inner_z;
+  for (int i = x_min; i < x_max; i++) {
+    for (int j = y_min; j < y_max; j++) {
+      for (int k = z_min; k < z_max; k++) {
+        inner_z.insert({k, false});
+      }
+      inner_y.insert({j,inner_z});
+    }
+    voxel_map.insert({i,inner_y});
+  }
 }

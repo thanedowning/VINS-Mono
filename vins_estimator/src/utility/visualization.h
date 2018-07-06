@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <std_msgs/Header.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Bool.h>
@@ -18,6 +19,8 @@
 #include "../estimator.h"
 #include "../parameters.h"
 #include <fstream>
+#include <math.h>
+#include <map>
 
 extern ros::Publisher pub_odometry;
 extern ros::Publisher pub_path, pub_pose;
@@ -28,6 +31,8 @@ extern ros::Publisher pub_key;
 extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
 extern int IMAGE_ROW, IMAGE_COL;
+
+static std::map<int,std::map<int,std::map<int,bool>>> voxel_map;
 
 void registerPub(ros::NodeHandle &n);
 
