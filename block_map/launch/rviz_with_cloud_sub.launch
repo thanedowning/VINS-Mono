@@ -1,0 +1,6 @@
+<launch>
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d with_cloud_sub.rviz" />
+</launch>
+
+
+<!--~/vis_mono_ws/src/VINS-Mono/voxel_grid_test/launch/-->

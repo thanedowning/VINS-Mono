@@ -1,0 +1,4 @@
+<launch>
+    <node name="block_map" pkg="block_map" type="block_map" output="screen">
+    </node>
+</launch>

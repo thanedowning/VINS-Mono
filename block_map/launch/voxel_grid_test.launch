@@ -1,0 +1,4 @@
+<launch>
+    <node name="voxel_grid_test" pkg="voxel_grid_test" type="voxel_grid_test" output="screen">
+    </node>
+</launch>
