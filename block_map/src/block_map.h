@@ -47,5 +47,5 @@ private:
   float saturation_max = 1.0;
   float add_constant = 0.1;
   float decay_constant = 0.015;
-  float decay_numerator = .0012;
+  float decay_numerator = .0005;
 };

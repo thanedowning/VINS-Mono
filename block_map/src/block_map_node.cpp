@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   message_filters::Synchronizer<approx_time> sync(approx_time(10), pointCloudSub, realPositionSub);
   sync.registerCallback(boost::bind(&cloud_callback, _1, _2));
 
-  ros::Rate rate(2);
+  ros::Rate rate(5);
   while(ros::ok()) {
     ros::spinOnce();
     blockMap.publishMap();
