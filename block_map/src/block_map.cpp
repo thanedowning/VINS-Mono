@@ -37,9 +37,9 @@ void BlockMap::addPoints(const sensor_msgs::PointCloudConstPtr &points_msg, cons
         +pow((curr_point.z - pose_msg->pose.pose.position.z),2)) > max_range) {
       continue;
     }
-    point_it.x = (int)(curr_point.x/voxel_res);
-    point_it.y = (int)(curr_point.y/voxel_res);
-    point_it.z = (int)(curr_point.z/voxel_res);
+    point_it.x = int{trunc(curr_point.x/voxel_res)};
+    point_it.y = int{trunc(curr_point.y/voxel_res)};
+    point_it.z = int{trunc(curr_point.z/voxel_res)};
     if (point_it.x == 0 && point_it.y == 0 && point_it.z == 0) {
       block_map[0].addPoint(point_it, add_constant);
       points_added += 1;
